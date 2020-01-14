@@ -1,1 +1,13 @@
-
+/*first*/ select * from certificate;
+/*second*/select firstname as "First", lastname as "Last", email from person;
+/*third*/select firstname as "First", lastname as "Last", email from person order by lastname DESC;
+/*fourth*/select firstname, lastname, email, city from person where city='Seattle';
+/*fifth*/select firstname, lastname, email, city from person where city='Seattle' 
+and dateadded between '2017-02-01' and '2017-03-01';
+/*sixth*/select firstname as "First", lastname as "Last" from person
+where "state"='WA' or "state"='OR' or "state"='WA';
+/*seventh*/select * from instructionalarea where description is null;
+/*eighth*/select * from instructionalarea where description is not null;
+/*nineth*/select * from person where lastname like '%nn';
+/*tenth*/select * from course where coursedescription like '% Python%';
+/*eleventh*/ select distinct studentkey from student order by studentkey ASC;
