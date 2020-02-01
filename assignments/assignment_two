@@ -1,0 +1,59 @@
+/*first query*/
+
+select extract (year from pricebegindate) as "Year", (pricepercredit * 5)- (pricediscount *5) as "Cost_5_credit" 
+from pricehistory
+where extract(year from pricebegindate) = 2018;
+
+/*second query*/
+
+select extract (year from pricebegindate) as "Year", (pricepercredit * 15)- (pricediscount * 15) as "Cost_5_credit" 
+from pricehistory
+where extract(year from pricebegindate) = 2018;
+
+/*third query*/
+
+select extract (year from pricebegindate) as "Year", to_char((pricepercredit * 15)- (pricediscount * 15),'$9,999.99') as "Cost_5_credit" 
+from pricehistory
+where extract(year from pricebegindate) = 2018;
+
+/*fourth query*/
+
+select * from logintable
+where username = 'JSullivan' and userpassword=CRYPT('SullivanPass', userpassword);
+
+/*fifth query*/
+
+select extract (year from dateadded) as "Distinct_Years" from person
+group by extract(year from dateadded);
+
+/*sixth query*/
+
+select * from certificate 
+where certificatedescription like '%data%' and 
+certificatedescription like '%science%';
+
+/*seventh query*/
+
+select * from person;
+select count(personkey) as "Number_of_people", extract (year from dateadded) as "Year"
+from person group by extract(year from dateadded);
+
+/*eigth query*/
+
+select round(avg(finalgrade),2) as "Average_grade" from roster;
+
+/*ninth query*/
+
+select max(finalgrade) from roster;
+
+/*tenth query*/
+
+select sectionkey as "section", round(avg(finalgrade),2) as "average_grade" from roster
+group by sectionkey order by sectionkey;
+
+/*eleventh query*/
+
+select * from roster where studentkey =87;
+select studentkey, round(avg(finalgrade),2) as "average_grade"
+from roster
+group by studentkey having avg(finalgrade)>3.5;
