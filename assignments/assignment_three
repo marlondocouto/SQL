@@ -1,0 +1,74 @@
+/*first query*/
+
+select coursename, quartername from course
+cross join quarter;
+
+/*second query*/
+
+select * from person;
+select lastname, firstname, email, studentstartdate
+from person inner join student
+on person.personkey=student.personkey
+where studentstartdate>='2017-01-01';
+
+/*third query*/
+
+select roster.sectionkey, student.studentkey, firstname, lastname, coursename, instructor.instructorkey
+from roster
+inner join student on roster.studentkey=student.studentkey
+inner join person on student.personkey=person.personkey
+inner join coursesection on roster.sectionkey=coursesection.sectionkey
+inner join course on coursesection.coursekey=course.coursekey
+full join instructor on coursesection.instructorkey=instructor.instructorkey
+where roster.sectionkey=17;
+
+/*fourth query*/
+
+select roster.sectionkey, coursename, quartername, count(distinct studentkey) as "enrolled" 
+from roster
+inner join coursesection on roster.sectionkey=coursesection.sectionkey
+inner join course on coursesection.coursekey=course.coursekey
+inner join quarter on coursesection.quarterkey=quarter.quarterkey
+group by roster.sectionkey, coursename, quartername;
+
+/*fifth query*/
+
+select roster.sectionkey,coursename, round(avg(finalgrade),2) as "avg_grade"
+from roster 
+inner join coursesection on roster.sectionkey=coursesection.sectionkey
+inner join course on coursesection.coursekey=course.coursekey
+group by roster.sectionkey, coursename
+order by roster.sectionkey;
+
+/*sixth query*/
+
+select firstname, lastname, round(avg(finalgrade),2) as "avg_grade" from roster 
+inner join student on roster.studentkey=student.studentkey
+inner join person on student.personkey=person.personkey
+where roster.studentkey=21
+group by firstname, lastname;
+
+/*seventh query*/
+
+select instructor.instructorkey, firstname, lastname, coursekey, sectionkey from instructor
+inner join person on instructor.personkey=person.personkey
+full outer join coursesection on instructor.instructorkey=coursesection.instructorkey
+where coursekey is null;
+
+/*eight query*/
+
+select course.coursekey, coursename, sectionyear, instructorkey from course
+left join coursesection on course.coursekey=coursesection.coursekey
+where sectionyear is null;
+
+/*ninth query*/
+
+select course.coursekey, coursename, sectionyear, instructorkey from course
+full join coursesection on course.coursekey=coursesection.coursekey
+where sectionyear is null;
+
+/*tenth query*/
+
+select certificatename, coursename from certificate
+natural join course order by certificatename;
+
