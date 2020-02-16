@@ -1,1 +1,74 @@
+--SUBQUERIES ASSIGNMENT
+--BY: Marlon Do Couto
+--Query ONE:
+
+select cnumber, names from
+(select certificate.certificatekey as "cnumber", 
+coursename as "names"
+from certificate inner join certificatecourse
+on certificate.certificatekey=certificatecourse.certificatekey
+inner join course on certificatecourse.coursekey=course.coursekey) as courses
+where cnumber=3;
+
+--Query TWO:
+
+SELECT firstname, lastname, email
+FROM person WHERE dateadded=(SELECT MIN(dateadded) from person); 
+
+--Query THREE:
+
+SELECT studentkey FROM student
+WHERE studentkey NOT IN (SELECT studentkey from roster);
+
+--Query FOUR & FIVE:
+
+SELECT rosterkey, TO_CHAR(AVG(finalgrade),'999.99') as " SectionAvg", 
+TO_CHAR((SELECT AVG(finalgrade) from roster),'999.99') AS "OverallAvg",
+TO_CHAR((SELECT AVG(finalgrade) from roster)-AVG(finalgrade),'999.99') AS "Difference"
+from roster GROUP BY rosterkey HAVING AVG(finalgrade) IS NOT NULL;
+
+--Query SIX:
+
+SELECT studentkey, lastname, firstname, email FROM
+(SELECT student.studentkey, 
+lastname, firstname, email, sectionkey FROM student
+INNER JOIN person ON student.personkey=person.personkey
+INNER JOIN roster ON student.studentkey=roster.studentkey) AS information
+WHERE sectionkey=30;
+
+--Query SEVEN:
+
+WITH information AS
+(SELECT student.studentkey, 
+lastname, firstname, email, sectionkey FROM student
+INNER JOIN person ON student.personkey=person.personkey
+INNER JOIN roster ON student.studentkey=roster.studentkey)
+SELECT studentkey, lastname, firstname, email
+FROM information WHERE sectionkey=30;
+
+--Query EIGHT:
+
+SELECT firstname, lastname, areaname FROM
+(SELECT firstname, lastname, areaname FROM person
+INNER JOIN instructor ON person.personkey=instructor.personkey
+INNER JOIN instructorarea ON instructor.instructorkey=instructorarea.instructorkey
+INNER JOIN instructionalarea ON instructorarea.instructionalareakey=instructionalarea.instructionalareakey) AS "areainfo";
+
+--Query NINE & TEN:
+
+SELECT sectionkey, studentkey, finalgrade
+FROM roster r1 
+WHERE finalgrade > (SELECT AVG(finalgrade) FROM roster r2 
+				   WHERE r1.sectionkey=r2.sectionkey)
+ORDER BY sectionkey;
+
+
+
+
+
+
+
+
+
+
 
