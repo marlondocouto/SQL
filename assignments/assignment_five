@@ -1,0 +1,64 @@
+--Assignment FIVE
+--By: Marlon Do Couto
+--Manipulating data, insert, delete, update, truncate
+
+--Query ONE:
+
+INSERT INTO course(coursename, credits, coursedescription)
+VALUES( 'testcourse',0,'this is a test');
+
+--Query TWO - FOUR:
+
+select*from person;
+INSERT INTO person(lastname, firstname, email, address, city, 
+				   state,postalcode,phone,dateadded)
+VALUES('Hernadez','Roberta','rhernadez@outlook.com','234 Nelson Street Apt 101',
+	   'Seattle','WA',98122,2065552019,current_timestamp);
+	   
+--Password added:
+INSERT INTO logintable(username,personkey,userpassword,datelastchanged)
+VALUES('RHernadez',(SELECT personkey from person where email='rhernadez@outlook.com'),
+	  CRYPT('HernandezPass',gen_salt('bf',8)),current_timestamp);
+
+--Query FIVE - SEVEN:
+
+INSERT INTO person(lastname, firstname, email, address, city,state,
+				  postalcode,phone,dateadded)
+VALUES('Brenen','Marylin','maylin.brenen@getcerts.com','1983 South Madison',
+	  'Seattle','WA',98122,2065557798,current_timestamp);
+
+--Password added:
+INSERT INTO logintable(username, personkey,userpassword,datelastchanged)
+VALUES('MBrenen',(SELECT personkey FROM person WHERE email='maylin.brenen@getcerts.com'),
+	  CRYPT('BrenenPass',gen_salt('bf',8)),current_timestamp);
+	  
+--Adding instruction and Instructional area:
+
+INSERT INTO instructor(personkey, hiredate,statuskey)
+VALUES((SELECT personkey from person WHERE email='maylin.brenen@getcerts.com'),current_date,1);
+
+INSERT INTO instructorarea(instructionalareakey,instructorkey)
+VALUES(2,(SELECT MAX(instructorkey) FROM instructor)),
+(4,(SELECT MAX(instructorkey) FROM instructor)),
+(3,(SELECT MAX(instructorkey) FROM instructor));
+
+--Query EIGHT:
+
+BEGIN TRANSACTION;
+UPDATE person
+SET lastname='Clarkston',
+email='geraldineclark@msn.com'
+WHERE personkey=211;
+COMMIT TRANSACTION;
+
+--Query NINE:
+
+BEGIN TRANSACTION;
+UPDATE roster
+SET finalgrade=3.22
+WHERE rosterkey=1179;
+COMMIT TRANSACTION;
+
+--Query TEN:
+DELETE FROM course WHERE coursename='testcourse';
+
