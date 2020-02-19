@@ -1,0 +1,112 @@
+--CREATING AND ALTERING TABLES
+--Assignment SEVEN
+--By:Marlon Do Couto
+
+--Query ONE:
+
+CREATE TABLE location
+(
+	locationkey SERIAL PRIMARY KEY,
+	locationname TEXT NOT NULL,
+	locationaddress TEXT NOT NULL,
+	locationcity TEXT NOT NULL,
+	locationstate CHAR(2) NOT NULL,
+	postalcode VARCHAR(12) NOT NULL,
+	phone VARCHAR(13) NOT NULL,
+	email TEXT UNIQUE
+);
+
+-- Query TWO:
+
+CREATE TABLE seminar
+(
+	seminarkey SERIAL PRIMARY KEY,
+	locationkey INT NOT NULL REFERENCES location(locationkey),
+	theme TEXT NOT NULL,
+	seminardate DATE NOT NULL,
+	description TEXT
+);
+
+--Query THREE:
+
+CREATE TABLE seminardetails
+(
+	seminardetailkey SERIAL,
+	seminarkey INT NOT NULL,
+	topic TEXT NOT NULL,
+	presenttime TIME,
+	room CHAR(5),
+	instructorkey INT,
+	description TEXT
+
+);
+
+ALTER TABLE seminardetails
+DROP COLUMN seminarkey;
+
+ALTER TABLE seminardetails
+ADD COLUMN seminarkey INT UNIQUE;
+
+--Query FOUR:
+
+ALTER TABLE seminardetails
+ADD PRIMARY KEY (seminardetailkey);
+
+--Query Five:
+ALTER TABLE seminardetails
+ADD CONSTRAINT fk_seminar FOREIGN KEY(seminarkey)
+REFERENCES seminardetails(seminarkey);
+ALTER TABLE seminardetails
+ADD CONSTRAINT fk_instructor FOREIGN KEY (instructorkey)
+REFERENCES instructor(instructorkey);
+
+-- RAN THROUGH HERE.
+
+--Query SIX:
+
+CREATE TABLE attendance
+(
+	attendancekey SERIAL,
+	seminardetailkey INT NOT NULL UNIQUE,
+	personkey INT NOT NULL
+
+);
+
+ALTER TABLE attendance
+ADD PRIMARY KEY (attendancekey);
+
+ALTER TABLE attendance
+ADD CONSTRAINT fk_seminardetails FOREIGN KEY(seminardetailkey)
+REFERENCES seminardetails(seminardetailkey);
+
+ALTER TABLE attendance
+ADD CONSTRAINT fk_person FOREIGN KEY (personkey)
+REFERENCES person(personkey);
+
+--Query SEVEN:
+
+ALTER TABLE person
+ADD COLUMN "newsletter" BOOLEAN DEFAULT TRUE;
+
+--Query EIGHT:
+ALTER TABLE roster
+ADD CONSTRAINT chk_grade CHECK(finalgrade BETWEEN 0 AND 4);
+
+--Query NINE:
+CREATE TEMP TABLE nullstudents
+(
+	rosterkey INT,
+	sectionkey INT,
+	studentkey INT,
+	finalgrade DECIMAL
+);
+
+INSERT INTO nullstudents(rosterkey, sectionkey, studentkey, finalgrade)
+SELECT rosterkey, sectionkey, studentkey, finalgrade
+FROM roster WHERE finalgrade IS NULL;
+
+--Query TEN:
+
+DROP TABLE nullstudents;
+
+
