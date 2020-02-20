@@ -1,0 +1,76 @@
+--Assignment 7
+--Schemas and views
+--By Marlon Do Couto
+
+--Query ONE:
+
+CREATE SCHEMA instructorschema;
+
+--QUERY TWO:
+
+CREATE VIEW instructorschema.roster
+AS
+SELECT roster.studentkey, firstname, lastname, email
+FROM roster INNER JOIN student
+ON roster.studentkey=student.studentkey
+INNER JOIN person
+ON student.personkey=person.personkey
+WHERE sectionkey=71;
+
+select * from instructorschema.roster;
+
+--Query THREE:
+
+CREATE VIEW instructorschema.peoplewa
+AS
+SELECT lastname, firstname, email, 
+address, city, state, postalcode, phone
+FROM person WHERE state='WA';
+
+select* from instructorschema.peoplewa;
+
+--Query FOUR:
+
+INSERT INTO instructorschema.peoplewa
+(lastname, firstname, email, address, city, state, postalcode, phone)
+VALUES('Jackson','Melanie','meljack@gmail.com', '111 S Anderson St',
+	  'Seattle', 'WA','98002','2065552323');
+	  
+--Query FIVE:
+
+UPDATE instructorschema.peoplewa
+SET firstname='Kenneth' WHERE firstname='Kane';
+
+--Query SIX:
+
+CREATE OR REPLACE VIEW instructorschema.peoplewa
+AS
+SELECT lastname, firstname, email, 
+address, city, state, postalcode, phone
+FROM person WHERE state='WA'
+WITH CHECK OPTION;
+
+--Query SEVEN:
+
+INSERT INTO instructorschema.peoplewa
+(lastname, firstname, email, address, city, state, postalcode, phone)
+VALUES('Norman','Rachel','rachelnorman@msn.com', '222 Mercer Avenue',
+	  'New York', 'NY','00234','1035552310');
+	  
+--Query EIGHT:
+
+CREATE MATERIALIZED VIEW instructorschema.studentstatus
+AS
+SELECT firstname, lastname, studentstartdate AS startdate, statuskey AS status
+FROM student INNER JOIN person ON student.personkey=person.personkey
+WITH DATA;
+
+--Query NINE:
+
+INSERT INTO student(personkey,studentstartdate, statuskey)
+VALUES((SELECT MAX(personkey) from person),current_date,1);
+
+--Query TEN:
+
+REFRESH MATERIALIZED VIEW instructorschema.studentstatus;
+
