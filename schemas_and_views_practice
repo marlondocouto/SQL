@@ -1,0 +1,91 @@
+CREATE SCHEMA employeeschema;
+CREATE SCHEMA donorschema;
+CREATE SCHEMA clientschema;
+
+--VIEWS ARE STORED QUERIES: Called view as they provide views of the data;
+
+CREATE VIEW numberserved --summary of the numbers of clients served and amounts requested
+AS
+SELECT EXTRACT(YEAR FROM grantapplicationdate) AS "Year",
+COUNT(grantapplicationkey) AS "Number",
+SUM(grantapplicationamount) AS "Total"
+FROM grantapplication
+GROUP BY EXTRACT (YEAR FROM grantapplicationdate);
+
+--using the view created:
+SELECT * FROM numberserved;
+
+--altering the view:
+CREATE OR REPLACE VIEW numberserved
+AS 
+SELECT EXTRACT (YEAR FROM grantapplicationdate) AS "Year",
+COUNT (grantapplicationkey) AS "Number",
+SUM(grantapplicationamount) AS "Total"
+FROM grantapplication
+GROUP BY EXTRACT(YEAR FROM grantapplicationdate)
+ORDER BY EXTRACT (YEAR FROM grantapplicationdate);
+
+--ALTER VIEW allows you to make structural changes to the view
+--CREATE OR REPLACE VIEW only allows you to add, but not cut from it
+
+CREATE VIEW employeeschema.employeeview
+AS
+SELECT personfirstname AS firstname,
+personlastname AS lastname,
+personemail AS email,
+positionname AS "position",
+employeepositionstartdate AS startdate
+FROM person INNER JOIN employee
+ON person.personkey=employee.personkey
+INNER JOIN employeeposition
+ON employee.employeekey=employeeposition.employeekey
+INNER JOIN jobposition
+ON jobposition.positionkey=employeeposition.positionkey;
+
+SELECT * FROM employeeschema.employeeview;
+
+--VIEW is updatable only if its based on a single table and does not have any function on the data
+
+CREATE VIEW people
+AS
+SELECT personkey AS "ID",
+personfirstname AS Firstname,
+personlastname AS Lastname,
+personemail AS Email,
+personprimaryphone AS Phone,
+persondateadded AS Dateadded
+FROM person
+ORDER BY persondateadded;
+
+SELECT*FROM people;
+
+UPDATE people SET phone='2065554231' WHERE "ID"=9;
+UPDATE people SET phone='2065554231' WHERE "ID"=13;
+
+--INSERT THROUGH THE VIEW:
+INSERT INTO people(firstname, lastname, email, phone, dateadded)
+VALUES('Marlon', 'Do Couto', 'mdocouto@hahaha.com.br', '2045556677',current_timestamp);
+
+SELECT * FROM people WHERE "ID"=(SELECT MAX("ID")FROM people);
+
+DELETE FROM people WHERE "ID"=(SELECT MAX("ID") FROM people);
+
+--Creating view WITH CHECK OPTION will allow you to add to through the view only data that will be
+--returned by the view. The Seattle/Bellevue example from the book. 
+
+--MATERIALIZED VIEWS are views that actually contain data. MATERIALIZED VIEWS
+--can be better for performance especially when you are joining tables and these are accessed too often
+--The drawback is that they aren't live. When database changes, View will not change:
+
+CREATE MATERIALIZED VIEW donorschema.topdonors
+AS
+SELECT personlastname AS lastname,
+personfirstname AS firstname,
+donationdate, donationamount AS amount
+FROM person INNER JOIN donation ON person.personkey=donation.personkey
+ORDER BY donationamount DESC LIMIT 10 WITH DATA; -- with data copies data to the view
+
+SELECT * FROM donorschema.topdonors;
+
+--if you add data through the view, you will need to REFRESH MATERIALIZED VIEW donorschema.topdonors;
+
