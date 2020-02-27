@@ -1,0 +1,161 @@
+--FUNCTIONS:
+
+--every function must have a return RETURNS type
+--$BODY$ is used to close it though not mandatory. $$ can also be used or envelop function in single quotes.
+-- Function takes in integer and returns the cube of it:
+--creates a function called cube in which you add an integer
+-- it will return an integer too
+-- as is the same as VIEWS: aliasing the function starting in $$
+CREATE OR REPLACE FUNCTION cube(num INTEGER) 
+RETURNS INTEGER 
+AS $$ BEGIN RETURN num * num * num; 
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT cube(3);
+--following function gets a number and multiply it be a specific percentage:
+CREATE OR REPLACE FUNCTION employeeschema.donationpercentages
+(amount NUMERIC, percentage NUMERIC)
+RETURNS NUMERIC
+AS $$
+BEGIN
+RETURN amount* percentage;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT donationdate, donationamount,
+employeeschema.donationpercentages(donationamount, .82) AS tocharity,
+employeeschema.donationpercentages(donationamount, .18) AS toorg
+FROM donation;
+
+--Modify function in case someone enters percentage as whole number:
+
+CREATE OR REPLACE FUNCTION employeeschema.donationpercentages
+(amount NUMERIC, percentage NUMERIC)
+RETURNS NUMERIC
+AS $$ BEGIN 
+IF percentage >1
+THEN RETURN amount* percentage/100;
+ELSE
+RETURN amount*percentage;
+END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+--IF structure: if <statement> 'then return'/else return
+--to exit IF: END IF;
+-- ifs always required language to be plpgsql since SQL does not support it.
+
+
+CREATE OR REPLACE FUNCTION makeusername
+(firstname TEXT, lastname TEXT) RETURNS TEXT AS
+$$ BEGIN RETURN LOWER(SUBSTRING(firstname,1,1)|| lastname);
+END;
+$$LANGUAGE plpgsql;
+
+--substring function (string, start, length)
+
+SELECT personfirstname, personlastname, makeusername(personfirstname, personlastname) AS Username
+FROM person;
+
+
+--function that returns a table:
+--NEED TO DEFINE THE TABLE AFTER "RETURNS TABLE":
+CREATE OR REPLACE FUNCTION donorschema.getdonations
+(donorkey INTEGER)
+RETURNS TABLE
+("Date" TIMESTAMP, Amount NUMERIC, validation UUID) AS $$
+BEGIN
+RETURN QUERY
+SELECT donationdate, donationamount, donationvalidation FROM donation WHERE personkey=donorkey;
+END;
+$$LANGUAGE plpgsql;
+
+SELECT * FROM donorschema.getdonations(79);
+
+-- PROCEDURES
+--function that performs a set of SQL statements
+--can be granted so users use the procedures so that you are sure SQL is executed correctly;
+
+CREATE OR REPLACE FUNCTION addperson
+(firstname TEXT, lastname TEXT, email TEXT, phone TEXT, announce BOOLEAN, apartment TEXT, street TEXT, city TEXT,
+"state" CHAR(2), zipcode CHAR(11), passwd VARCHAR(50)) RETURNS VOID
+AS $$
+INSERT INTO person(personfirstname, personlastname, personemail, personprimaryphone, persondateadded, announcement)
+VALUES(firstname, lastname, email, phone, current_timestamp, announce);
+INSERT INTO personaddress(personkey, personaddressapt, personaddressstreet, personaddresscity, personaddressstate, personaddresszipcode)
+VALUES(CURRVAL('person_personkey_seq'), apartment, street, city, "state",zipcode);
+INSERT INTO logintable(personkey, personusername, personpassword)
+VALUES(CURRVAL('person_personkey_seq'), makeusername(firstname, lastname),createpassword(passwd));
+$$LANGUAGE sql;
+
+--for testing procedures, it is always a good idea to make a copy of the database to test these stuff
+--dont do it in the live database;
+
+SELECT addperson('Joseph','Rodgers','josephrodgers@hotmail.com','2065557788',TRUE,'641','222 8th Ave','Seattle','WA','98001','RodgersPass');
+select * from person where personlastname='Rodgers';
+
+
+--procedure to allow users to update their information so that sql is done correctly:
+
+CREATE OR REPLACE function EditPerson
+(pkey INTEGER, firstname TEXT, lastname TEXT, email TEXT, phone TEXT, announce BOOLEAN, 
+ apartment TEXT, street TEXT, city TEXT, "state" CHAR(2), zipcode CHAR(11)) RETURNS VOID
+ AS 
+ $$
+ UPDATE person
+SET personfirstname=firstname, personlastname=lastname,
+personemail=email, personprimaryphone=phone,
+announcement=announce WHERE personkey=pkey;
+
+UPDATE personaddress
+SET personaddressapt=apartment, personaddressstreet=street,
+personaddresscity=city, personaddressstate="state",
+personaddresszipcode=zipcode WHERE personkey=pkey;
+
+$$ LANGUAGE sql;
+
+
+SELECT editperson(141,'Joseph','Rodgers','joseph.rodgers@hotmail.com','2065557788',TRUE,'212','1200 150th AVE','Seattle','WA','98001');
+
+--TRIGGERS:
+--a function which is triggered by an event; usual events are INSERT, UPDATE, or DELETE/TRUNCATE;
+--triggers can fire BEFORE, AFTER, or INSTEAD OF the action;
+--with a trigger, you can for instance check the data as is being inserted
+
+--1st create the trigger funcation that defines the action of the trigger
+
+ALTER TABLE grantapplication
+ADD isflag BOOLEAN DEFAULT FALSE;
+
+CREATE OR REPLACE FUNCTION flagrequest()
+RETURNS TRIGGER AS
+$BODY$
+BEGIN
+IF NEW.grantapplicationamount>(SELECT granttypeonetimemax FROM granttype WHERE grantypekey=NEW.granttypekey)
+THEN
+UPDATE grantapplication
+SET isflag=TRUE
+WHERE grantapplicationkey=NEW.grantapplicationkey;
+END IF;
+RETURN NEW;
+END;
+$BODY$ LANGUAGE plpgsql;
+
+--2nd create the trigger itself identifying table the trigger is attached to and actions firing trigger:
+
+CREATE TRIGGER flag_over_amounts
+AFTER INSERT
+ON grantapplication
+FOR EACH ROW
+EXECUTE PROCEDURE flagrequest();
+
+--firing the trigger:
+
+select *from grantapplication;
+
+INSERT INTO grantapplication(grantapplicationdate,personkey, granttypekey, grantapplicationamount, grantapplicationexplain)
+VALUES (current_timestamp,130,1,300.00,'hungry');
+
+
+
