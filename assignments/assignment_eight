@@ -28,6 +28,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 --Query THREE: 
+
 CREATE OR REPLACE FUNCTION pricepercourse
 (courseneeded TEXT)
 RETURNS TABLE
@@ -43,6 +44,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 --Query FOUR:
+
 CREATE OR REPLACE FUNCTION totalcreditsperstudent
 (studkey INT)
 RETURNS TABLE
@@ -59,3 +61,93 @@ WHERE student.studentkey=studkey
 GROUP BY student.studentkey;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Query FIVE:
+
+CREATE OR REPLACE FUNCTION allinfostudent
+(wantedstudent INTEGER)
+RETURNS TABLE
+(Skey INTEGER, nameofcourse TEXT, creditsofclass INTEGER, grade NUMERIC)
+AS $$
+BEGIN RETURN QUERY
+SELECT roster.studentkey, coursename, credits, finalgrade
+FROM course INNER JOIN coursesection
+ON course.coursekey=coursesection.coursekey
+INNER JOIN roster
+ON coursesection.sectionkey=roster.sectionkey
+WHERE roster.studentkey=wantedstudent;
+END;
+$$ LANGUAGE plpgsql;
+
+select * from allinfostudent(10);
+
+--Query SIX:
+
+SELECT * FROM person;
+CREATE OR REPLACE FUNCTION addnewstudent
+(newlastname TEXT, newfirstname TEXT, newemail TEXT, newaddress TEXT,
+newcity TEXT, newstate CHAR(2), newpostalcode TEXT, newphone TEXT,
+newpassword VARCHAR(50))
+RETURNS VOID
+AS $$
+BEGIN 
+INSERT INTO person (lastname, firstname, email, address, 
+				   city, state, postalcode, phone, dateadded, newsletter)
+VALUES (newlastname, newfirstname, newemail, newaddress, newcity,
+	   newstate, newpostalcode, newphone, current_timestamp, TRUE);
+
+INSERT INTO student(personkey, studentstartdate, statuskey)
+VALUES (CURRVAL('person_personkey_seq'),current_timestamp, 1);
+
+INSERT INTO logintable(username, personkey, userpassword, datelastchanged)
+VALUES (makeusername(firstname, lastname), CURRVAL('person_personkey_seq'),
+	   current_timestamp, CRYPT(newpassword, gen_salt('bf',8)));
+	   
+END;
+$$ LANGUAGE plpgsql;
+
+--Query SEVEN:
+
+CREATE OR REPLACE FUNCTION editstudent
+(pkey INTEGER, updatedfirstname TEXT, updatedlastname TEXT, 
+ updatedemail TEXT, updtaedaddress TEXT, updatedcity TEXT,
+updatedstate CHAR(2),updatedpostalcode TEXT, updatedphone TEXT)
+RETURNS VOID
+AS $$ BEGIN
+UPDATE person SET firstname=updatedfirstname, lastname=updatedlastname,
+email=updatedemail, address=updatedaddress, city=updatedcity,
+state=updatedstate, postalcode=updatedpostalcode, phone=updatedphone
+WHERE personkey=pkey;
+END;
+$$ LANGUAGE plpgsql;
+
+
+--Query EIGHT:
+select * from roster;
+ALTER TABLE roster
+ADD lowgradeflag BOOLEAN DEFAULT FALSE;
+
+--Query NINE:
+
+CREATE OR REPLACE FUNCTION gradeflags()
+RETURNS TRIGGER AS $$
+BEGIN
+IF NEW.finalgrade <2.0
+THEN NEW.lowgradeflag=TRUE;
+END IF;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+--Query TEN:
+
+CREATE TRIGGER flag_over_2
+BEFORE UPDATE
+ON roster
+FOR EACH ROW
+EXECUTE PROCEDURE gradeflags();
+
+select * from roster;
+UPDATE roster SET finalgrade=1.5 WHERE rosterkey=1097;
+select * from roster where rosterkey=1097;
