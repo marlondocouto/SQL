@@ -1,0 +1,61 @@
+--Assignment EIGHT
+--Functions Triggers and Procedures
+
+--Query ONE:
+
+CREATE OR REPLACE FUNCTION makeusername
+(firstname TEXT, lastname TEXT) RETURNS TEXT AS
+$$ BEGIN
+RETURN(SUBSTRING(firstname,1,1)||lastname);
+END;
+$$ LANGUAGE plpgsql;
+
+--Query TWO:
+
+CREATE OR REPLACE FUNCTION certificatecredits
+(wantedcertificate TEXT)
+RETURNS TABLE
+(name TEXT, creditstotal BIGINT) AS $$
+BEGIN RETURN QUERY
+SELECT certificatename, SUM(course.credits) AS totalcredits
+from certificate inner join certificatecourse
+on certificate.certificatekey=certificatecourse.certificatekey
+inner join course 
+on certificatecourse.coursekey=course.coursekey
+WHERE certificatename=wantedcertificate
+GROUP BY certificatename;
+END;
+$$ LANGUAGE plpgsql;
+
+--Query THREE: 
+CREATE OR REPLACE FUNCTION pricepercourse
+(courseneeded TEXT)
+RETURNS TABLE
+(nameofthecourse TEXT, totalpriceclass NUMERIC) AS $$
+BEGIN RETURN QUERY
+SELECT coursename, ((credits)*(pricepercredit))
+FROM course INNER JOIN coursesection 
+ON course.coursekey=coursesection.coursekey
+INNER JOIN pricehistory
+ON coursesection.pricehistorykey=pricehistory.pricehistorykey
+WHERE coursename=courseneeded;
+END;
+$$ LANGUAGE plpgsql;
+
+--Query FOUR:
+CREATE OR REPLACE FUNCTION totalcreditsperstudent
+(studkey INT)
+RETURNS TABLE
+(student_key INT, allcredits BIGINT) AS $$
+BEGIN RETURN QUERY
+SELECT student.studentkey, SUM(credits) as creditstaken
+FROM student INNER JOIN roster
+ON student.studentkey=roster.studentkey
+INNER JOIN coursesection 
+ON roster.sectionkey=coursesection.sectionkey
+INNER JOIN course
+ON coursesection.coursekey=course.coursekey
+WHERE student.studentkey=studkey
+GROUP BY student.studentkey;
+END;
+$$ LANGUAGE plpgsql;
