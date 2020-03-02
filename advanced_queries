@@ -1,0 +1,85 @@
+--SET FUNCTIONS
+
+--UNION: combines all elements of two sets with a common structure.
+--meaning they need to have same number of columns and same data types.
+--temp table to practice:
+CREATE TEMP TABLE email 
+(firstname text, 
+lastname text, 
+email text); 
+INSERT INTO email(firstname, lastname, email) 
+values('Jordan', 'Lawrence', 'jordanl@gmail.com'), 
+('Tammy', 'Standish', 'tstandish@msn.com'), 
+('Lester', 'Roberts', 'lr@yahoo.com'), 
+('Lynn', 'Kellerman', 'kellerman@gmail.com'); 
+
+--combine two email lists into one:
+
+select lastname, firstname, email, 'temptable' as tblSource from email
+UNION
+select personlastname, personfirstname, personemail, 'persontable' from person
+join personaddress
+using (personkey)
+where personaddresscity='Bellevue';
+-- select the columns, create a role; donors are in the first select with the join donation
+--in the second select you have the grantees with the join on grantapps
+
+select personlastname lastname, personfirstname firstname, personemail email, 'donor' "role"
+from person Join donation using(personkey) where donationamount >=2000
+union
+select personlastname lastname, personfirstname firstname, personemail email, 'client'
+from person join grantapplication using (personkey) where granttypekey=2;
+
+--INTERSECT: shows which members two sets have in common
+SELECT personkey, personlastname, personfirstname from person
+join donation using (personkey)
+intersect
+select personkey, personlastname, personfirstname from person
+join grantapplication using (personkey);
+
+--EXCEPT: compares two sets but it returns only those records in the first
+--set which have no match in the second set.
+-- all granttypes for which no application has been received
+--grant type acts like A and grantapplication acts like B
+--except shows all A which have no match in B:
+select granttypename from granttype
+except
+select granttypename from grantapplication
+join granttype using (granttypekey);
+
+--WINDOW FUNCTIONS
+--PARTITION function: acts somewhat like a GROUP BY. PARTITION determines the subsets in the
+-- windowed rows. Results are PARTITION OVER the column you want to divide by. 
+
+select grantapplicationkey, granttypekey, count(*) OVER (PARTITION BY granttypekey)
+from grantapplication;
+
+--RANK():
+--rank counts number of rows. if you want a more precise ranking use DENSE_RANK():
+
+SELECT granttypename, grantapplicationkey, grantapplicationamount,
+RANK() OVER (PARTITION BY granttypename ORDER BY grantapplicationamount DESC)
+FROM grantapplication
+JOIN granttype ON granttype.granttypekey=grantapplication.granttypekey WHERE granttypename = 'Food';
+
+--ROW_NUMBER();
+--Adds row numbers according to some specificatuion.
+--Below it is ordered by grantapplicationamount:
+
+SELECT grantapplicationkey, granttypename, grantapplicationamount, 
+ROW_NUMBER() OVER(ORDER BY grantapplicationamount) 
+FROM grantapplication 
+JOIN granttype using(granttypekey); 
+
+-- You can use a select to get specific rows within the row_number function:
+
+SELECT * FROM 
+(SELECT grantapplicationkey, granttypename, grantapplicationamount, 
+ROW_NUMBER() OVER(ORDER BY grantapplicationamount)  
+FROM grantapplication 
+JOIN granttype using(granttypekey))grants 
+WHERE ROW_NUMBER BETWEEN 20 and 30; 
+
+--PIVOT
+--need extension: "CREATE EXTENSION tablefunc;"
+--
