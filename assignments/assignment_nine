@@ -1,0 +1,78 @@
+--Query ONE:
+
+select lastname, firstname, email, 'section2' as sectionsource from person 
+inner join student
+using (personkey) inner join roster using (studentkey) where sectionkey=2
+union 
+select lastname, firstname, email, 'section1' from person
+inner join student using (personkey) 
+inner join roster using (studentkey) where sectionkey=1;
+
+--Query TWO:
+
+select distinct lastname, firstname, email from person
+inner join student using (personkey)
+inner join roster using (studentkey)
+inner join coursesection using (sectionkey)
+where sectionyear=2017
+intersect 
+select distinct lastname, firstname, email from person
+inner join student using (personkey)
+inner join roster using (studentkey)
+inner join coursesection using (sectionkey)
+where sectionyear=2018;
+
+--Query THREE:
+
+select distinct lastname, firstname, email from person
+inner join student using (personkey)
+inner join roster using (studentkey)
+inner join coursesection using (sectionkey)
+where sectionyear=2017
+EXCEPT
+select distinct lastname, firstname, email from person
+inner join student using (personkey)
+inner join roster using (studentkey)
+inner join coursesection using (sectionkey)
+where sectionyear=2018;
+
+--Query FOUR:
+
+select sectionyear, quarterkey, studentkey, finalgrade, 
+count (*) over (partition by sectionyear order by quarterkey)
+from coursesection inner join roster using (sectionkey);
+
+--Query FIVE:
+
+select sectionyear, sectionkey, studentkey, finalgrade,
+ROW_NUMBER() OVER(ORDER BY finalgrade)
+from coursesection inner join roster using (sectionkey);
+
+--Query SIX:
+
+select * from (
+select sectionyear, sectionkey, studentkey, finalgrade,
+ROW_NUMBER() OVER(ORDER BY finalgrade)
+from coursesection inner join roster using (sectionkey)) as fulltable
+where row_number between 7 and 9;
+
+--Query SEVEN:
+
+select sectionyear, sectionkey, studentkey, finalgrade, 
+RANK() OVER(partition by sectionkey order by finalgrade desc)
+from coursesection inner join roster using (sectionkey)
+where sectionkey between 29 and 35;
+
+--Query EIGHT:
+
+select sectionyear, sectionkey, studentkey, finalgrade, 
+DENSE_RANK() OVER(partition by sectionkey order by finalgrade desc)
+from coursesection inner join roster using (sectionkey)
+where sectionkey between 29 and 35;
+
+--Query NINE:
+
+select sectionyear, sectionkey, studentkey, FIRST_VALUE(finalgrade) OVER(partition by sectionkey order by finalgrade)
+from coursesection inner join roster using (sectionkey)
+where sectionkey between 29 and 35;
+
