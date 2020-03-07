@@ -1,0 +1,38 @@
+--Query ONE:
+
+SELECT * from information_schema.tables;
+
+--Query TWO:
+
+SELECT column_name, data_type from information_schema.columns
+WHERE table_name='certificate';
+
+--Query THREE:
+
+CREATE INDEX ON person(lastname);
+
+--Query FOUR:
+
+CREATE INDEX ON roster(studentkey);
+
+--Query FIVE:
+
+CREATE INDEX ON coursesection(coursekey, quarterkey, sectionyear);
+
+--Query SIX:
+
+CREATE ROLE mbrown WITH PASSWORD 'P@ssw0rd1' LOGIN INHERIT;
+
+--Query SEVEN:
+
+CREATE ROLE instructorrole;
+
+GRANT USAGE ON SCHEMA public TO instructorrole;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO instructorrole;
+
+--QUERY EIGHT:
+
+GRANT instructorrole TO mbrown;
+
+
