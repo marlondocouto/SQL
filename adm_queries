@@ -1,0 +1,44 @@
+select * from information_schema.tables;
+--select [columns] from information_schema.[viewname]--
+
+select column_name, data_type from information_schema.columns where table_name='grantapplication';
+
+--creating INDEXES: structures associated with tables to help increase the speed of the searches.
+--Not very helpful for smaller sets of data since it can actually INCREASE run time. 
+
+CREATE INDEX ON person(personlastname);
+
+SELECT tablename, indexname, indexdef FROM pg_indexes WHERE tablename='person';
+
+--USERS LOGINS AND ROLES:
+--Authentication: determining if user is who they claim to be.
+--Authorization: granting an authenticated user the permissions they need to work with the db.
+--one way to handle these is to create logins for each user.
+--roles: used as a log in to the server.
+--CREATING ROLES:
+
+CREATE ROLE employeerole;
+
+--GRANTING PERMISSIONS
+--TO ACCESS:
+GRANT CONNECT ON DATABASE CommunityAssist TO employeerole;
+GRANT USAGE ON SCHEMA public TO employeerole;
+
+--can grant: SELECT/UPDATE/INSERT ON ALL TABLES IN SCHEMA public
+--can grant: EXECUTE ON ALL FUNCTIONS
+
+GRANT USAGE ON SCHEMA employeeschema TO employeerole;
+GRANT SELECT ON ALL TABLES IN SCHEMA employeeschema TO employeerole;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA employeeschema TO employeerole;
+
+CREATE ROLE jandersOn WITH PASSWORD 'P@ssw0rd1' LOGIN INHERIT;
+--inherit gives it the ability to inherit permissions of a role.. it inherits, then we grant permission:
+GRANT employeerole TO janderson;
+
+--to drop a role, you first must REVOKE all its permissions then:
+--DROP ROLE [rolename];
+
+
+
+
+
